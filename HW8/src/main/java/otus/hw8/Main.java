@@ -11,7 +11,7 @@ public class Main {
 
     public void run() {
         Serializer serializer = new Serializer();
-        String result = serializer.exec(new Test5());
+        String result = serializer.exec(new Test1());
         System.out.println(result);
     }
 

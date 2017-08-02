@@ -17,7 +17,7 @@ public class Serializer {
     private JSONObject getMemberObjectValue(Object o) {
         JSONObject jsonObject = new JSONObject();
         for (Field field : o.getClass().getDeclaredFields())
-            if(!isThisField(field))
+            if(!field.isSynthetic())
                 jsonObject.put(field.getName(), getObjectValue(ReflectionHelper.getFieldValue(o, field.getName())));
 
         return jsonObject;
@@ -46,9 +46,5 @@ public class Serializer {
         for (int i = 0; i < Array.getLength(array); i++) jsonArray.add(getObjectValue(Array.get(array, i)));
 
         return jsonArray;
-    }
-
-    private boolean isThisField(Field field) {
-        return field.getModifiers() == 4112;
     }
 }
