@@ -2,12 +2,13 @@ package hw9;
 
 import hw9.dataset.User;
 import hw9.jdbs.Executor;
-import hw9.util.ConnectionHelper;
 import org.junit.Before;
 import org.junit.Test;
+import org.postgresql.Driver;
 
 import static org.junit.Assert.*;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class ExecutorTest {
@@ -15,8 +16,17 @@ public class ExecutorTest {
     private Connection connection;
 
     @Before
-    public void setup() {
-        connection = ConnectionHelper.getConnection();
+    public void setup() throws SQLException {
+        DriverManager.registerDriver(new Driver());
+
+        String url = "jdbc:postgresql://" +
+                "localhost:" +
+                "5432/" +
+                "test?" +
+                "user=homestead&" +
+                "password=secret";
+
+        connection = DriverManager.getConnection(url);
         executor = new Executor(connection);
     }
 

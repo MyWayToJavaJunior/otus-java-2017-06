@@ -2,7 +2,8 @@ package hw9;
 
 import hw9.dataset.User;
 import hw9.jdbs.Executor;
-import hw9.util.ConnectionHelper;
+import hw9.service.DBService;
+import hw9.service.DBServiceImpl;
 
 import java.sql.SQLException;
 
@@ -18,16 +19,16 @@ import java.sql.SQLException;
 
 public class Main {
     public static void main(String[] args) throws IllegalAccessException, SQLException, InstantiationException {
-        Executor executor = new Executor(ConnectionHelper.getConnection());
+        DBService dbService = new DBServiceImpl();
 
-        User admin = executor.load(1, User.class);
-        User user = executor.load(3, User.class);
+        User admin = dbService.get(1);
+        User user = dbService.get(3);
 
-        executor.save(User.builder().name("User1").age(10).build());
-        executor.save(User.builder().name("User2").build());
-        executor.save(User.builder().age(30).build());
-        executor.save(new User());
-        executor.save(User.builder().id(100).build());
-        executor.save(admin);
+        dbService.save(User.builder().name("User1").age(10).build());
+        dbService.save(User.builder().name("User2").build());
+        dbService.save(User.builder().age(30).build());
+        dbService.save(new User());
+        dbService.save(User.builder().id(100).build());
+        dbService.save(admin);
     }
 }
