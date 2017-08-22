@@ -51,7 +51,8 @@ public class CacheImpl<K, V> implements Cache<K, V> {
 
     @Override
     public CacheElement<V> get(K key) {
-        CacheElement<V> element = elements.get(key).get();
+        SoftReference<CacheElement<V>> ref = elements.get(key);
+        CacheElement<V> element = ref == null ? null : ref.get();
         if (element != null) {
             hit++;
             element.setLastAccessTime();
@@ -80,7 +81,8 @@ public class CacheImpl<K, V> implements Cache<K, V> {
         return new TimerTask() {
             @Override
             public void run() {
-                CacheElement<V> checkedElement = elements.get(key).get();
+                SoftReference<CacheElement<V>> ref = elements.get(key);
+                CacheElement<V> checkedElement = ref == null ? null : ref.get();
                 if (checkedElement == null ||
                         isT1BeforeT2(timeFunction.apply(checkedElement), System.currentTimeMillis())) {
                     elements.remove(key);

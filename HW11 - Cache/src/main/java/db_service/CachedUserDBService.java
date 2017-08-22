@@ -23,6 +23,10 @@ public class CachedUserDBService implements DBService {
     @Override
     public UserDataSet get(long id) {
         CacheElement<UserDataSet> cacheElement = cache.get(id);
-        return cacheElement != null ? cacheElement.getValue() : dbService.get(id);
+        if (cacheElement != null) return cacheElement.getValue();
+        
+        UserDataSet dataSet = dbService.get(id);
+        cache.put(dataSet.getId(), new CacheElement<>(dataSet));
+        return dataSet;
     }
 }
