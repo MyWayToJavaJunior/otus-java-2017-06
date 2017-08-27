@@ -29,4 +29,8 @@ public class CachedUserDBService implements DBService {
         cache.put(dataSet.getId(), new CacheElement<>(dataSet));
         return dataSet;
     }
+
+    public Cache<Long, UserDataSet> getCache() {
+        return cache;
+    }
 }

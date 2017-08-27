@@ -91,6 +91,25 @@ public class CacheImpl<K, V> implements Cache<K, V> {
         };
     }
 
+    public int getMaxElements() {
+        return maxElements;
+    }
+
+    public long getLifeTimeMs() {
+        return lifeTimeMs;
+    }
+
+    public long getIdleTimeMs() {
+        return idleTimeMs;
+    }
+
+    public boolean isEternal() {
+        return isEternal;
+    }
+
+    public int getCurCacheSize() {
+        return elements.size();
+    }
 
     private boolean isT1BeforeT2(long t1, long t2) {
         return t1 < t2 + TIME_THRESHOLD_MS;
