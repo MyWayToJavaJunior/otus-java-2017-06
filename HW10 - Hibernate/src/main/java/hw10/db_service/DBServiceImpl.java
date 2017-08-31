@@ -26,7 +26,7 @@ public class DBServiceImpl implements DBService {
         configuration.setProperty("hibernate.connection.username", "homestead");
         configuration.setProperty("hibernate.connection.password", "secret");
         configuration.setProperty("hibernate.show_sql", "true");
-//        configuration.setProperty("hibernate.enable_lazy_load_no_trans", "true");
+        configuration.setProperty("hibernate.enable_lazy_load_no_trans", "true");
         configuration.setProperty("hibernate.hbm2ddl.auto", "create");
 
         sessionFactory = createSessionFactory(configuration);
@@ -50,6 +50,13 @@ public class DBServiceImpl implements DBService {
     public UserDataSet get(long id) {
         try (Session session = sessionFactory.openSession()) {
             return new UserDAO(session).get(id);
+        }
+    }
+
+    @Override
+    public UserDataSet get(String name) {
+        try (Session session = sessionFactory.openSession()) {
+            return new UserDAO(session).get(name);
         }
     }
 }

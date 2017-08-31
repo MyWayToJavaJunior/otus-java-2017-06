@@ -21,7 +21,7 @@ public class DBServiceTest {
 
     @Test
     public void test() {
-        UserDataSet user = new UserDataSet("Name1", 1, new AddressDataSet("Street1"),
+        UserDataSet user = new UserDataSet("Name1", "pass", 1, new AddressDataSet("Street1"),
                 Arrays.asList(new PhoneDataSet("+70001112201"), new PhoneDataSet("+70001112202")));
         dbService.save(user);
 

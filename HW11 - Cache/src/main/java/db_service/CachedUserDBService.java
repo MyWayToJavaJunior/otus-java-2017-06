@@ -30,6 +30,11 @@ public class CachedUserDBService implements DBService {
         return dataSet;
     }
 
+    @Override
+    public UserDataSet get(String s) {
+        return dbService.get(s);
+    }
+
     public Cache<Long, UserDataSet> getCache() {
         return cache;
     }

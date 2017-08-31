@@ -27,7 +27,7 @@ public class ServiceTest {
 
     @Test
     public void test() throws NoSuchFieldException, IllegalAccessException {
-        UserDataSet user = new UserDataSet("Name1", 1, new AddressDataSet("Street1"),
+        UserDataSet user = new UserDataSet("Name1", "pass", 1, new AddressDataSet("Street1"),
                 Arrays.asList(new PhoneDataSet("+70001112201"), new PhoneDataSet("+70001112202")));
         dbService.save(user);
 
@@ -37,7 +37,7 @@ public class ServiceTest {
         Assert.assertEquals(user.getName(), actual.getName());
         Assert.assertEquals(1, cache.getHitCount());
 
-        user = new UserDataSet("Name2", 20, new AddressDataSet("Street2"),
+        user = new UserDataSet("Name2", "pass",20, new AddressDataSet("Street2"),
                 Arrays.asList(new PhoneDataSet("+70001112203")));
         vanilaDbService.save(user);
         dbService.get(2);
