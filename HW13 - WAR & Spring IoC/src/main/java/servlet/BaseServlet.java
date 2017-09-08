@@ -1,14 +1,17 @@
 package servlet;
 
-import context.Context;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
 public class BaseServlet extends HttpServlet {
     @Override
-    public void init() throws ServletException {
-        super.init();
-        Context.instance().getAutowireCapableBeanFactory().autowireBean(this);
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+
+        WebApplicationContextUtils.getWebApplicationContext(config.getServletContext())
+                .getAutowireCapableBeanFactory().autowireBean(this);
     }
 }

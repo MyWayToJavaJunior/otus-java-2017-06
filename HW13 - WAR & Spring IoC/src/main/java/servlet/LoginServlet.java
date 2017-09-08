@@ -1,14 +1,11 @@
 package servlet;
 
-import context.Context;
-import db_service.CachedUserDBService;
 import hw10.dataset.UserDataSet;
 import hw10.db_service.DBService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
