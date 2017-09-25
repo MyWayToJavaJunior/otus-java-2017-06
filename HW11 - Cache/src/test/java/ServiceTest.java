@@ -1,6 +1,6 @@
 import cache.Cache;
 import cache.CacheImpl;
-import db_service.CachedUserDBService;
+import db_service.CachedUserDBServiceImpl;
 import hw10.dataset.AddressDataSet;
 import hw10.dataset.PhoneDataSet;
 import hw10.dataset.UserDataSet;
@@ -11,7 +11,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Map;
 
 public class ServiceTest {
     private Cache<Long, UserDataSet> cache;
@@ -22,7 +21,7 @@ public class ServiceTest {
     public void setup() {
         cache = new CacheImpl<>(1000, 0, 0, true);
         vanilaDbService = new DBServiceImpl();
-        dbService = new CachedUserDBService(vanilaDbService, cache);
+        dbService = new CachedUserDBServiceImpl(vanilaDbService, cache);
     }
 
     @Test
