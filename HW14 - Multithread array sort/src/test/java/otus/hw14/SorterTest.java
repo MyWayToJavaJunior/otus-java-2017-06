@@ -41,4 +41,15 @@ public class SorterTest {
         Arrays.sort(data);
         assertTrue(Arrays.equals(data, actual));
     }
+
+    @Test
+    public void largeAutoTestImp() {
+        Random random = new Random();
+        int[] data = new int[10000];
+        for (int i = 0; i < 10000; i++) data[i] = random.nextInt();
+
+        int[] actual = new Sorter(data, 30).sort();
+        Arrays.sort(data);
+        assertTrue(Arrays.equals(data, actual));
+    }
 }
