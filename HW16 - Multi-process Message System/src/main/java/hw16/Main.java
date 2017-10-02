@@ -38,9 +38,12 @@ public class Main {
                 new ProcessBuilder("java", "-jar", jarPath, "frontend", "7070").start();
                 new ProcessBuilder("java", "-jar", jarPath, "frontend", "6060").start();
                 new ProcessBuilder("java", "-jar", jarPath, "db").start();
+                Thread.sleep(3000); // doesn't work, without it
                 new ProcessBuilder("java", "-jar", jarPath, "db").start();
 
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }, DELAY_SEC, TimeUnit.SECONDS);
