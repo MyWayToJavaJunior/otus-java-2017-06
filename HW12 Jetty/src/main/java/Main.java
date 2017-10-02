@@ -1,5 +1,6 @@
 import cache.CacheImpl;
 import db_service.CachedUserDBService;
+import db_service.CachedUserDBServiceImpl;
 import hw10.dataset.AddressDataSet;
 import hw10.dataset.PhoneDataSet;
 import hw10.dataset.UserDataSet;
@@ -22,7 +23,7 @@ public class Main {
         ResourceHandler resourceHandler = new ResourceHandler();
         resourceHandler.setResourceBase(TemplateProcessor.STATIC_DIR);
 
-        CachedUserDBService dbService = new CachedUserDBService(new DBServiceImpl(), new CacheImpl<>(10, 1000, 5, true));
+        CachedUserDBService dbService = new CachedUserDBServiceImpl(new DBServiceImpl(), new CacheImpl<>(10, 1000, 5, true));
 
         UserDataSet admin = new UserDataSet("Admin", "secret", 1, new AddressDataSet("Street"),
                 Arrays.asList(new PhoneDataSet("+70001112200")));
