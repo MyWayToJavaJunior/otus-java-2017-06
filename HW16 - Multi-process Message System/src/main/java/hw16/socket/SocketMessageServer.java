@@ -34,8 +34,7 @@ public class SocketMessageServer {
             logger.info("Server started on port: " + serverSocket.getLocalPort());
             while(true) {
                 Socket socket = serverSocket.accept();
-                SocketMessageHandler client = new SocketMessageHandler(socket);
-                client.init();
+                SocketMessageClient client = new SocketMessageClient(socket);
                 clients.add(client);
 
                 Message msg = client.take();

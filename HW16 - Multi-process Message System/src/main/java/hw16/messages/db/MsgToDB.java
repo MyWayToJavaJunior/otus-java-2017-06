@@ -2,6 +2,7 @@ package hw16.messages.db;
 
 import db_service.CachedUserDBService;
 import hw10.db_service.DBService;
+import hw16.db.MessageSystemDBService;
 import hw16.message_system.Address;
 import hw16.message_system.Addressee;
 import hw16.message_system.Message;
@@ -17,9 +18,9 @@ public abstract class MsgToDB extends Message {
     @Override
     public void exec(Addressee addressee) {
         if (addressee instanceof DBService) {
-            exec((CachedUserDBService) addressee);
+            exec((MessageSystemDBService) addressee);
         } else throw new RuntimeException();
     }
 
-    public abstract void exec(CachedUserDBService dbService);
+    public abstract void exec(MessageSystemDBService dbService);
 }

@@ -5,21 +5,29 @@ import db_service.CachedUserDBService;
 import hw10.dataset.UserDataSet;
 import hw16.message_system.Address;
 import hw16.message_system.Addressee;
+import hw16.message_system.MessageSystemContext;
 import hw16.socket.SocketMessageServer;
 
 import java.util.UUID;
 
 public class MessageSystemDBService implements CachedUserDBService, Addressee {
+    private final MessageSystemContext context;
     private final CachedUserDBService cachedUserDBService;
     private final Address address = new Address(SocketMessageServer.DB_ADDRESS.getId() + "@" + UUID.randomUUID().toString());
 
-    public MessageSystemDBService(CachedUserDBService cachedUserDBService) {
+    public MessageSystemDBService(MessageSystemContext context, CachedUserDBService cachedUserDBService) {
+        this.context = context;
         this.cachedUserDBService = cachedUserDBService;
     }
 
     @Override
     public Address getAddress() {
         return address;
+    }
+
+    @Override
+    public MessageSystemContext getMessageSystemContext() {
+        return context;
     }
 
     @Override

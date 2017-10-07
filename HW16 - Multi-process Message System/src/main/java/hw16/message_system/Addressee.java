@@ -5,4 +5,5 @@ package hw16.message_system;
  */
 public interface Addressee {
     Address getAddress();
+    MessageSystemContext getMessageSystemContext();
 }

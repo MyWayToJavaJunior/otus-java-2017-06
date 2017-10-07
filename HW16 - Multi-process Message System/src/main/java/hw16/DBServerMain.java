@@ -1,6 +1,7 @@
 package hw16;
 
 import cache.CacheImpl;
+import db_service.CachedUserDBService;
 import db_service.CachedUserDBServiceImpl;
 import hw10.dataset.AddressDataSet;
 import hw10.dataset.PhoneDataSet;
@@ -8,24 +9,33 @@ import hw10.dataset.UserDataSet;
 import hw10.db_service.DBService;
 import hw10.db_service.DBServiceImpl;
 import hw16.db.MessageSystemDBService;
+import hw16.message_system.MessageSystem;
 import hw16.message_system.MessageSystemContext;
+import hw16.message_system.ProcessMessageSystem;
 import hw16.socket.SocketMessageClient;
+import hw16.socket.SocketMessageServer;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.util.Arrays;
 
 public class DBServerMain {
-    public static void main(String[] args) throws IOException, InterruptedException {
-        MessageSystemDBService messageSystemDBService = new MessageSystemDBService(new CachedUserDBServiceImpl(
-                new DBServiceImpl(), new CacheImpl<>(1, 11, 1, true)));
+    private static String host = "localhost";
+
+    public static void main(String[] args) throws Exception {
+        MessageSystem messageSystem = new ProcessMessageSystem(new SocketMessageClient(new Socket(host, SocketMessageServer.PORT)));
+        MessageSystemContext context = new MessageSystemContext(messageSystem);
+
+        CachedUserDBService dbService = new CachedUserDBServiceImpl(new DBServiceImpl(),
+                new CacheImpl<>(1, 11, 1, true));
+        MessageSystemDBService messageSystemDBService = new MessageSystemDBService(context, dbService);
+        messageSystem.addAddressee(messageSystemDBService);
 
         seedDB(messageSystemDBService);
 
-        SocketMessageClient socketMessageClient = new SocketMessageClient(messageSystemDBService);
-        socketMessageClient.run();
+        context.setDbAddress(messageSystemDBService.getAddress());
 
-        MessageSystemContext.setClient(socketMessageClient);
-        MessageSystemContext.setDbAddress(messageSystemDBService.getAddress());
+        messageSystem.start();
     }
 
     private static void seedDB(DBService dbService) {

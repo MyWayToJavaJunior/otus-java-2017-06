@@ -1,10 +1,15 @@
 package hw16.socket;
 
-import hw16.message_system.Addressee;
+import com.google.gson.Gson;
 import hw16.message_system.Message;
-import hw16.messages.AddressMessage;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -13,42 +18,80 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class SocketMessageClient {
+public class SocketMessageClient implements MessageHandler {
     private static final Logger logger = Logger.getLogger(SocketMessageClient.class.getName());
+    private static final int WORKERS_COUNT = 2;
 
-    private static final String HOST = "localhost";
-    private static final int PAUSE_MS = 5000;
-    private static final int MAX_MESSAGES_COUNT = 10;
+    private final BlockingQueue<Message> output = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Message> input = new LinkedBlockingQueue<>();
 
-    private final Addressee addressee;
-    private SocketMessageHandler client;
+    private final ExecutorService executor;
+    private final Socket socket;
 
-    public SocketMessageClient(Addressee addressee) {
-        this.addressee = addressee;
+    public SocketMessageClient(Socket socket) {
+        this.socket = socket;
+        this.executor = Executors.newFixedThreadPool(WORKERS_COUNT);
+        this.init();
     }
 
-    public void run() throws InterruptedException, IOException {
-        client = new SocketMessageHandler(new Socket(HOST, SocketMessageServer.PORT));
-        client.init();
+    @Override
+    public void send(Message msg) {
+        output.add(msg);
+    }
 
-        client.send(new AddressMessage(addressee.getAddress()));
+    @Override
+    public Message poll() {
+        return  input.poll();
+    }
 
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
+    @Override
+    public Message take() throws InterruptedException {
+        return input.take();
+    }
 
-        executorService.submit(() -> {
-            try {
-                while (true) {
-                    Message msg = client.take();
+    private void init() {
+        executor.execute(this::sendMessage);
+        executor.execute(this::receiveMessage);
+    }
 
-                    msg.exec(addressee);
+    private void receiveMessage() {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+            String inputLine;
+            StringBuilder stringBuilder = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                stringBuilder.append(inputLine);
+                if (inputLine.isEmpty()) {
+                    String json = stringBuilder.toString();
+                    Message msg = getMsgFromJSON(json);
+                    input.add(msg);
+                    stringBuilder = new StringBuilder();
                 }
-            } catch (InterruptedException e) {
-                logger.log(Level.SEVERE, e.getMessage());
             }
-        });
+        } catch (IOException | ParseException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void sendMessage(Message msg) {
-        client.send(msg);
+    private void sendMessage() {
+        try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+            while (socket.isConnected()) {
+                Message msg = output.take();
+                String json = new Gson().toJson(msg);
+                out.println(json);
+                out.println();
+            }
+        } catch (InterruptedException | IOException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+        }
+    }
+
+    private static Message getMsgFromJSON(String json) throws ParseException, ClassNotFoundException {
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject) jsonParser.parse(json);
+        String className = (String) jsonObject.get(Message.CLASS_NAME_VARIABLE);
+        Class<?> msgClass = Class.forName(className);
+        return (Message) new Gson().fromJson(json, msgClass);
     }
 }

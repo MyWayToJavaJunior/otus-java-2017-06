@@ -1,34 +1,32 @@
 package hw16.message_system;
 
-import hw16.socket.SocketMessageClient;
-import lombok.Data;
-
 public class MessageSystemContext {
-    private static SocketMessageClient client;
-    private static Address frontAddress;
-    private static Address dbAddress;
+    private final MessageSystem messageSystem;
 
-    public static void setClient(SocketMessageClient client) {
-        MessageSystemContext.client = client;
+    private Address frontAddress;
+    private Address dbAddress;
+
+    public MessageSystemContext(MessageSystem messageSystem) {
+        this.messageSystem = messageSystem;
     }
 
-    public static void sendMessage(Message message) {
-        client.sendMessage(message);
+    public MessageSystem getMessageSystem() {
+        return messageSystem;
     }
 
-    public static Address getFrontAddress() {
+    public Address getFrontAddress() {
         return frontAddress;
     }
 
-    public static void setFrontAddress(Address frontAddress) {
-        MessageSystemContext.frontAddress = frontAddress;
+    public void setFrontAddress(Address frontAddress) {
+        this.frontAddress = frontAddress;
     }
 
-    public static Address getDbAddress() {
+    public Address getDbAddress() {
         return dbAddress;
     }
 
-    public static void setDbAddress(Address dbAddress) {
-        MessageSystemContext.dbAddress = dbAddress;
+    public void setDbAddress(Address dbAddress) {
+        this.dbAddress = dbAddress;
     }
 }

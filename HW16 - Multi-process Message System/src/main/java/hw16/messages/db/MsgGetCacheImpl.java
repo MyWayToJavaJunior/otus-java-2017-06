@@ -2,6 +2,7 @@ package hw16.messages.db;
 
 import cache.CacheImpl;
 import db_service.CachedUserDBService;
+import hw16.db.MessageSystemDBService;
 import hw16.message_system.Address;
 import hw16.message_system.MessageSystemContext;
 import hw16.messages.frontend.MsgGetCacheImplAnswer;
@@ -17,7 +18,8 @@ public class MsgGetCacheImpl extends MsgToDB {
     }
 
     @Override
-    public void exec(CachedUserDBService dbService) {
-        MessageSystemContext.sendMessage(new MsgGetCacheImplAnswer(getTo(), getFrom(), session, (CacheImpl) dbService.getCache()));
+    public void exec(MessageSystemDBService dbService) {
+        dbService.getMessageSystemContext().getMessageSystem().sendMessage(new MsgGetCacheImplAnswer(getTo(),
+                getFrom(), session, (CacheImpl) dbService.getCache()));
     }
 }

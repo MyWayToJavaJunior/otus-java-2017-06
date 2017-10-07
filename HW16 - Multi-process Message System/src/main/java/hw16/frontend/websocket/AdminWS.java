@@ -14,11 +14,17 @@ import java.util.UUID;
 
 @ServerEndpoint(value = "/admin")
 public class AdminWS {
+    private final MessageSystemContext context;
+
+    public AdminWS(MessageSystemContext context) {
+        this.context = context;
+    }
+
     @OnMessage
     public void handleMessage(String message, Session session) {
         String sessionId = FrontendService.addSession(session);
 
-        MessageSystemContext.sendMessage(new MsgGetUser(MessageSystemContext.getFrontAddress(),
-                MessageSystemContext.getDbAddress(), "Admin", sessionId));
+        context.getMessageSystem().sendMessage(new MsgGetUser(context.getFrontAddress(),
+                context.getDbAddress(), "Admin", sessionId));
     }
 }

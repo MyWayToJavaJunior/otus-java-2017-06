@@ -4,6 +4,7 @@ import cache.CacheImpl;
 import hw10.dataset.UserDataSet;
 import hw16.message_system.Address;
 import hw16.message_system.Addressee;
+import hw16.message_system.MessageSystemContext;
 
 import javax.websocket.Session;
 import java.io.IOException;
@@ -15,10 +16,12 @@ public class FrontendService implements Addressee {
     public static final String FRONTEND_ADDRESS_PREFIX = "frontend-";
 
     private final Address address;
+    private final MessageSystemContext context;
     private static final Map<String, Session> sessions = new HashMap<>();
 
-    public FrontendService(Address address) {
+    public FrontendService(Address address, MessageSystemContext context) {
         this.address = address;
+        this.context = context;
     }
 
     public void sendAnswer(Session session, CacheImpl cache) {
@@ -56,5 +59,10 @@ public class FrontendService implements Addressee {
     @Override
     public Address getAddress() {
         return address;
+    }
+
+    @Override
+    public MessageSystemContext getMessageSystemContext() {
+        return context;
     }
 }
