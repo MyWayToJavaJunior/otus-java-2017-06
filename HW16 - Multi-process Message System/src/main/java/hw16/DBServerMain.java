@@ -15,7 +15,6 @@ import hw16.message_system.ProcessMessageSystem;
 import hw16.socket.SocketMessageClient;
 import hw16.socket.SocketMessageServer;
 
-import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
 

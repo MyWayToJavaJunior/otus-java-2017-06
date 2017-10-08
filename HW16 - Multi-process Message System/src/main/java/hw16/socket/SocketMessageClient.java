@@ -18,7 +18,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class SocketMessageClient implements MessageHandler {
+public class SocketMessageClient implements MessageClient {
     private static final Logger logger = Logger.getLogger(SocketMessageClient.class.getName());
     private static final int WORKERS_COUNT = 2;
 
@@ -62,7 +62,8 @@ public class SocketMessageClient implements MessageHandler {
                 stringBuilder.append(inputLine);
                 if (inputLine.isEmpty()) {
                     String json = stringBuilder.toString();
-                    Message msg = getMsgFromJSON(json);
+                    System.out.println(json);
+                    Message msg = Message.getMsgFromJSON(json);
                     input.add(msg);
                     stringBuilder = new StringBuilder();
                 }
@@ -85,13 +86,5 @@ public class SocketMessageClient implements MessageHandler {
         } catch (InterruptedException | IOException e) {
             logger.log(Level.SEVERE, e.getMessage());
         }
-    }
-
-    private static Message getMsgFromJSON(String json) throws ParseException, ClassNotFoundException {
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) jsonParser.parse(json);
-        String className = (String) jsonObject.get(Message.CLASS_NAME_VARIABLE);
-        Class<?> msgClass = Class.forName(className);
-        return (Message) new Gson().fromJson(json, msgClass);
     }
 }

@@ -16,7 +16,6 @@ import org.eclipse.jetty.websocket.jsr356.server.ServerContainer;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 
 import javax.websocket.server.ServerEndpointConfig;
-import java.io.IOException;
 import java.net.Socket;
 
 @Data
