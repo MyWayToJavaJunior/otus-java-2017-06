@@ -62,7 +62,6 @@ public class SocketMessageClient implements MessageClient {
                 stringBuilder.append(inputLine);
                 if (inputLine.isEmpty()) {
                     String json = stringBuilder.toString();
-                    System.out.println(json);
                     Message msg = Message.getMsgFromJSON(json);
                     input.add(msg);
                     stringBuilder = new StringBuilder();

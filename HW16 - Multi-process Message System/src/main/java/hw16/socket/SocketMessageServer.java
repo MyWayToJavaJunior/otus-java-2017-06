@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import hw16.message_system.Address;
 import hw16.message_system.Message;
 import hw16.messages.AddressMessage;
+import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -14,6 +15,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -25,110 +27,115 @@ public class SocketMessageServer {
     private static final int THREADS_NUMBER = 1;
     public static final int PORT = 8080;
     private static final int ECHO_DELAY = 100;
-    private static final int CAPACITY = 1024;
+    private static final int CAPACITY = 10;
     private static final String MESSAGES_SEPARATOR = "\n\n";
-
-    private final ExecutorService executor;
-    private final Map<String, ChannelMessages> channelMessages;
-    private final Map<Address, ChannelMessages> addresses = new HashMap<>();
-    private final Queue<Address> dbAddresses = new LinkedList<>();
 
     public static final Address DB_ADDRESS = new Address("db");
 
-    public SocketMessageServer() {
-        executor = Executors.newFixedThreadPool(THREADS_NUMBER);
-        channelMessages = new ConcurrentHashMap<>();
-    }
+    private final ExecutorService executor = Executors.newFixedThreadPool(THREADS_NUMBER);
+    private final Map<String, ChannelMessages> channelMessages = new ConcurrentHashMap<>();
+    private final Map<Address, ChannelMessages> addresses = new ConcurrentHashMap<>();
+    private final Queue<Address> dbAddresses = new ConcurrentLinkedQueue<>();
+
+    private StringBuilder readBuilder = new StringBuilder();
+
 
     @SuppressWarnings("InfiniteLoopStatement")
     public void start() throws Exception {
-        executor.submit(this::echo);
+        executor.submit(this::write);
 
         try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()) {
             serverSocketChannel.bind(new InetSocketAddress("localhost", PORT));
 
-            serverSocketChannel.configureBlocking(false); //non blocking mode
-            int ops = SelectionKey.OP_ACCEPT;
+            serverSocketChannel.configureBlocking(false);
             Selector selector = Selector.open();
-            serverSocketChannel.register(selector, ops, null);
+            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT, null);
 
             logger.info("Started on port: " + PORT);
 
-            while (true) {
-                selector.select();//blocks
-                Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-                while (iterator.hasNext()) {
-                    SelectionKey key = iterator.next();
-                    try {
-                        if (key.isAcceptable()) {
-                            SocketChannel channel = serverSocketChannel.accept(); //non blocking accept
-                            String remoteAddress = channel.getRemoteAddress().toString();
-                            System.out.println("Connection Accepted: " + remoteAddress);
+            listen(selector, serverSocketChannel);
+        }
+    }
 
-                            channel.configureBlocking(false);
-                            channel.register(selector, SelectionKey.OP_READ);
+    private void listen(Selector selector, ServerSocketChannel serverChannel) throws IOException {
+        while (true) {
+            selector.select();
+            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
 
-                            channelMessages.put(remoteAddress, new ChannelMessages(channel));
-
-                        } else if (key.isReadable()) {
-                            SocketChannel channel = (SocketChannel) key.channel();
-
-                            ByteBuffer buffer = ByteBuffer.allocate(CAPACITY);
-                            int read = channel.read(buffer);
-                            if (read != -1) {
-                                String json = new String(buffer.array()).trim();
-                                if (json.equals("")) continue;
-
-                                Message msg = Message.getMsgFromJSON(json);
-                                System.out.println("Message received: " + msg + " from: " + channel.getRemoteAddress());
-
-                                if (msg instanceof AddressMessage) {
-                                    addresses.put(msg.getFrom(), channelMessages.get(channel.getRemoteAddress().toString()));
-                                    logger.info("Accept " + msg.getFrom());
-
-                                    if ((msg.getFrom().getId().split("@")[0]).equals(DB_ADDRESS.getId())) {
-                                        dbAddresses.add(msg.getFrom());
-                                    }
-                                }
-                                else channelMessages.get(channel.getRemoteAddress().toString()).messages.add(msg);
-
-                            } else {
-                                key.cancel();
-                                String remoteAddress = channel.getRemoteAddress().toString();
-                                channelMessages.remove(remoteAddress);
-                                System.out.println("Connection closed, key canceled");
-                            }
-                        }
-                    } catch (IOException e) {
-                        logger.log(Level.SEVERE, e.getMessage());
-                    } finally {
-                        iterator.remove();
-                    }
+                try {
+                    if (key.isAcceptable())
+                        accept(selector, serverChannel);
+                    else if (key.isReadable())
+                        read(key);
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, e.getMessage());
+                } finally {
+                    iterator.remove();
                 }
             }
         }
     }
 
+    private void accept(Selector selector, ServerSocketChannel serverChannel) throws IOException {
+        SocketChannel channel = serverChannel.accept();
+        String remoteAddress = channel.getRemoteAddress().toString();
+        logger.info("Connection Accepted: " + remoteAddress);
+
+        channel.configureBlocking(false);
+        channel.register(selector, SelectionKey.OP_READ);
+
+        channelMessages.put(remoteAddress, new ChannelMessages(channel));
+    }
+
+    private void read(SelectionKey key) throws IOException, ParseException, ClassNotFoundException {
+        SocketChannel channel = (SocketChannel) key.channel();
+        ByteBuffer buffer = ByteBuffer.allocate(CAPACITY);
+
+        int read = channel.read(buffer);
+        if (read != -1) {
+            String part = new String(buffer.array()).trim();
+            readBuilder.append(part);
+
+            if (part.length() != read) {
+                readMessage(channel);
+                return;
+            }
+        } else {
+            key.cancel();
+            String remoteAddress = channel.getRemoteAddress().toString();
+            channelMessages.remove(remoteAddress);
+            logger.info("Connection closed, key canceled");
+        }
+    }
+
+    private void readMessage(SocketChannel channel) throws ParseException, ClassNotFoundException, IOException {
+        Message msg = Message.getMsgFromJSON(readBuilder.toString());
+        readBuilder = new StringBuilder();
+
+        logger.info("Message received: " + msg + " from: " + channel.getRemoteAddress());
+
+        if (msg instanceof AddressMessage) {
+            addresses.put(msg.getFrom(), channelMessages.get(channel.getRemoteAddress().toString()));
+            logger.info("Accept " + msg.getFrom());
+
+            if ((msg.getFrom().getId().split("@")[0]).equals(DB_ADDRESS.getId())) {
+                dbAddresses.add(msg.getFrom());
+            }
+        }
+        else channelMessages.get(channel.getRemoteAddress().toString()).messages.add(msg);
+    }
+
     @SuppressWarnings("InfiniteLoopStatement")
-    private Object echo() throws InterruptedException {
+    private Object write() throws InterruptedException {
         while (true) {
             for (Map.Entry<String, ChannelMessages> entry : channelMessages.entrySet()) {
                 ChannelMessages channelMessages = entry.getValue();
                 if (channelMessages.channel.isConnected()) {
                     channelMessages.messages.forEach(message -> {
                         try {
-                            Address to = message.getTo().equals(DB_ADDRESS) ? pickDbAddress() : message.getTo();
-
-                            ByteBuffer buffer = ByteBuffer.allocate(CAPACITY);
-                            buffer.put(new Gson().toJson(message).getBytes());
-                            buffer.put(MESSAGES_SEPARATOR.getBytes());
-                            buffer.flip();
-
-                            System.out.println("Send message" + message + ", to " + to +
-                                    " (" + addresses.get(to).channel.getRemoteAddress() + ")");
-                            while (buffer.hasRemaining()) {
-                                addresses.get(to).channel.write(buffer);
-                            }
+                            writeMessage(message);
                         } catch (IOException e) {
                             logger.log(Level.SEVERE, e.getMessage());
                         }
@@ -137,6 +144,19 @@ public class SocketMessageServer {
                 }
             }
             Thread.sleep(ECHO_DELAY);
+        }
+    }
+
+    private void writeMessage(Message message) throws IOException {
+        Address to = message.getTo().equals(DB_ADDRESS) ? pickDbAddress() : message.getTo();
+
+        String json = new Gson().toJson(message) + MESSAGES_SEPARATOR;
+        ByteBuffer buffer = ByteBuffer.wrap(json.getBytes());
+
+        logger.info("Send message" + message + ", to " + to + " (" + addresses.get(to).channel.getRemoteAddress() + ")");
+
+        while (buffer.hasRemaining()) {
+            addresses.get(to).channel.write(buffer);
         }
     }
 
